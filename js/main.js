@@ -48,24 +48,18 @@ var ShapeView = Backbone.View.extend({
       .attr('viewBox', '0 0 150 150')
       .attr('preserveAspectRation', 'xMidYMid meet');
       
-   this.path = this.svg.append("path")
-    .attr('transform', 'rotate(-45), translate(-50, 50)');
+   this.path = this.svg.append("path");
  },
  
  render: function () {
-    var self = this;
- 
-    function tweenShape(d, i, a) {
-      console.debug("tween:", d, i, a);
-      return d3.interpolateString(d, self.model.get('path'));
-    };
+    var params = this.model.toJSON();
     
     this.path
-     .transition()
-     .attrTween('d', tweenShape)
-     .attr('fill', this.model.get('color'));
+     .attr('d', params.path)
+     .attr('fill', params.color)
+     .attr('transform', 'translate(' + params.translate + '), rotate(' + params.rotate +')');
     
-    this.$el.attr('style', 'top: '+this.model.get('top')+'%');
+    this.$el.attr('style', 'top: '+ params.top +'%');
     
     return this;
  }
@@ -219,6 +213,8 @@ var ShapePolygon = Backbone.Model.extend({
     this._diamond2circle = d3.interpolateString(d0, d1);
     //this._triangle2circle = d3.interpolateString(triangle(), circle());
     this._color2color = d3.interpolateRgb(initColor, finishColor);
+    this._rotate = d3.interpolateNumber(-45, -90);
+    this._translate= d3.interpolateString('0, 70', '10, 110');
     this._current = 0;
     this.min = 0;
     this.speed = 20;
@@ -232,11 +228,12 @@ var ShapePolygon = Backbone.Model.extend({
     
     
     this.set({
-      'top': current * 80/this.max, 
+      'top': current * 70/this.max, 
       'path': this._diamond2circle(current/this.speed/2),
-      'color': this._color2color(current/this.speed/2)
+      'color': this._color2color(current/this.speed/2),
+      'rotate': this._rotate(current/this.speed/2),
+      'translate': this._translate(current/this.speed/2)
     });
-    //this.set('angle', this._rotate(current/this.speed/2));
     
     this._current = current;
   },
