@@ -278,7 +278,7 @@ var ShapeCSS = Backbone.Model.extend({
     }
   },
   
-  _rgbToHex(rgb) {
+  _rgbToHex: function (rgb) {
     return "#" + ((rgb.r << 16) + (rgb.g << 8) + rgb.b).toString(16);
   },
 
@@ -291,7 +291,7 @@ var ShapeCSS = Backbone.Model.extend({
     
     var initColor = this._randomRgb();
     var finishColor = this._randomRgb();
-    this.interpolateRgb = this._interpolatorRgb(initColor, finishColor);
+    this._interpolateRgb = this._interpolatorRgb(initColor, finishColor);
     
   },
   
