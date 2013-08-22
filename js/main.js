@@ -285,7 +285,7 @@ var ShapeCSS = Backbone.Model.extend({
   initialize: function(options) {
     options = options || {};
     this._current = 0;
-    this.min = 1;
+    this.min = 3;
     this.speed = 10;
     this.max = (this.speed * 2);
     
@@ -300,7 +300,7 @@ var ShapeCSS = Backbone.Model.extend({
     console.debug('Shape#transformOn:', current);
   
     this.set({
-      'top': current * 90/this.max, 
+      'top': current * 80/this.max, 
       'borderRadius': current * 50/this.max,
       'backgroundColor': this._rgbToHex(this._interpolateRgb(current * 1/this.max))
     });
