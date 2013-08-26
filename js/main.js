@@ -158,10 +158,11 @@ var State = Backbone.Model.extend({
 var ShapePolygonView = Backbone.View.extend({
   className: 'shape-polygon',
 
- initialize: function (options) {
-   var options = options || {},
-      initColor = options.initColor || '#FF0000',
-      finishColor = options.finishColor || '#0000FF';
+  initialize: function (options) {
+    var options = options || {};
+   
+    var initColor = randomRgb();
+    this.finishColor = randomRgb();
  
    this.svg = d3.select(this.el).append("svg")
       .attr('viewBox', '0 0 160 160')
@@ -177,7 +178,7 @@ var ShapePolygonView = Backbone.View.extend({
   
     this._diamond2circle = d3.interpolateString(d0, d1);
     //this._triangle2circle = d3.interpolateString(triangle(), circle());
-    this._color2color = d3.interpolateRgb(initColor, finishColor);
+    this._color2color = d3.interpolateRgb(rgbToHex(initColor), rgbToHex(this.finishColor));
     this._rotate = d3.interpolateNumber(-45, -90);
     this._translate= d3.interpolateString('0, 70', '10, 124');
     this._top = function (state) { return state * 80 };
@@ -187,6 +188,11 @@ var ShapePolygonView = Backbone.View.extend({
  
  render: function () {
     var state = this.model.get('state')/100;
+    
+    if (state === 1) {
+      var initColor = randomRgb();
+      this._color2color = d3.interpolateRgb(rgbToHex(initColor), rgbToHex(this.finishColor));
+    }
     
     this.path
      .attr('d', this._diamond2circle(state))
@@ -202,10 +208,11 @@ var ShapePolygonView = Backbone.View.extend({
 var ShapeSFView = Backbone.View.extend({
   className: 'shape-sf',
 
- initialize: function (options) {
-   var options = options || {},
-      initColor = options.initColor || '#FF0000',
-      finishColor = options.finishColor || '#0000FF';
+  initialize: function (options) {
+    var options = options || {};
+      
+    var initColor = randomRgb();
+    this.finishColor = randomRgb();
  
    this.svg = d3.select(this.el).append("svg")
       .attr('viewBox', '0 0 160 160')
@@ -219,7 +226,7 @@ var ShapeSFView = Backbone.View.extend({
   
     this._diamond2triangle = d3.interpolateString(diamond(), triangle());
     this._triangle2circle = d3.interpolateString(triangle(), circle());
-    this._color2color = d3.interpolateRgb(initColor, finishColor);
+    this._color2color = d3.interpolateRgb(rgbToHex(initColor), rgbToHex(this.finishColor));
     this._rotate = d3.interpolateNumber(0, 60);
     
     this._translate= d3.interpolateString('70, 75', '70, 75');
@@ -237,12 +244,19 @@ var ShapeSFView = Backbone.View.extend({
       var path =this._triangle2circle(state*2 - 1);
     }
     
+    if (state === 1) {
+      var initColor = randomRgb();
+      this._color2color = d3.interpolateRgb(rgbToHex(initColor), rgbToHex(this.finishColor));
+    }
+    
     this.path
      .attr('d', path)
      .attr('fill', this._color2color(state))
      .attr('transform', 'translate(' + this._translate(state) + '), rotate(' + this._rotate(state) +')');
      
     this.$el.attr('style', 'top: '+ this._top(state) +'%');
+    
+
     
     return this;
  }
