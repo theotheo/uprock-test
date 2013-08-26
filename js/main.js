@@ -1,3 +1,5 @@
+'use strict';
+
 function circle(coordinates) {
   var circle = [],
       length = 0,
@@ -39,151 +41,12 @@ function circle(coordinates) {
   return circle;
 }
 
-///////////////////////////////////////
-var ShapeView = Backbone.View.extend({
- el: '#svg',
-
- initialize: function (options) {
-   this.svg = d3.select(this.el).append("svg")
-      .attr('viewBox', '0 0 150 150')
-      .attr('preserveAspectRation', 'xMidYMid meet');
-      
-   this.path = this.svg.append("path");
- },
- 
- render: function () {
-    var params = this.model.toJSON();
-    
-    this.path
-     .attr('d', params.path)
-     .attr('fill', params.color)
-     .attr('transform', 'translate(' + params.translate + '), rotate(' + params.rotate +')');
-    
-    this.$el.attr('style', 'top: '+ params.top +'%');
-    
-    return this;
- }
-});
- 
-// dom  
-var MainView = Backbone.View.extend({
-  el: 'body',
-  
-  initialize: function (options) {
-    var options = options || {};
-    this.shape = options.shape;
-    this.ShapeView = options.ShapeView;
-      
-    this.$el.hammer();
-  },
-  
-  events: {
-    "mousewheel": "onScroll",
-    "swipedown": this.onScroll,
-    "swipeup": this.onScroll
-  },
-  
-  onScroll: function (event) {
-    var delta = event.originalEvent.wheelDelta/120; 
-    console.debug('delta:', delta);
-    this.shape.transformOn(delta);
-  },
-  
-  render: function () {
-    var shapeView = this.shapeView = new this.ShapeView({model: this.shape});
-    shapeView.listenTo(this.shape, 'change', shapeView.render);
-    this.$el.append(shapeView.el);
-    
-    return this;
-  }
-});
-
-_.templateSettings.interpolate = /\{\{(.+?)\}\}/g;
-//_.templateSettings.escape = /\{\{-(.*?)\}\}/g;
-
-//
-var ShapeViewCSS = Backbone.View.extend({
-  className: 'shape-container',
-  template: _.template("<div class='shape' style='border-radius: {{borderRadius}}%; background-color: {{backgroundColor}}'></div></div>"),
-  
-  initialize: function (options) {
-    var options = options || {},
-      initColor = options.initColor || '#FF0000',
-      finishColor = options.finishColor || '#0000FF';
-  },
-  
-  render: function () {
-    console.debug('ShapeViewCSS#render', this.$el, this.model.toJSON()); 
-    var params = this.model.toJSON();
-    this.$el.html(this.template(params));
-    this.$el.attr('style', 'top: '+params.top+'%');
-    
-    return this;
-  }
-});
-
-//
-// model
-var ShapeSF = Backbone.Model.extend({
-  initialize: function (options) {
-    var options = options || {},
-      initColor = options.initColor || '#FF0000',
-      finishColor = options.finishColor || '#0000FF';
-    
-    var diamond = d3.superformula().type("diamond").size(10000).segments(360); 
-    var triangle = d3.superformula().type("triangle").size(10000).segments(360);
-    var circle = d3.superformula().type("circle").size(10000).segments(360);
-  
-    this._diamond2triangle = d3.interpolateString(diamond(), triangle());
-    this._triangle2circle = d3.interpolateString(triangle(), circle());
-    this._color2color = d3.interpolateRgb(initColor, finishColor);
-    this._rotate = d3.interpolateNumber(0, 90);
-    this._current = 0;
-    this.min = 0;
-    this.speed = 20;
-    this.max = this.speed * 2;
-
-    this.transformOn(0);
-  },
-  
-  transformOn: function (delta) {
-    var current = this._normalize(this._current - delta);
-    console.debug('Shape#transformOn:', current);
-    
-    if (current <= this.max/2) {
-      this.set('path', this._diamond2triangle(current/this.speed));
-    } else  {
-      this.set('path', this._triangle2circle(current/this.speed - 1));
-    }
-    this.set('color', this._color2color(current/this.speed/2));
-    this.set('angle', this._rotate(current/this.speed/2));
-    
-    this._current = current;
-  },
-  
-  _normalize: function (current) {
-    if (current < this.min) {
-      current = this.min;
-    } else if (current > this.max) {
-      current = this.max;
-    }
-    return current;
-  }
-})
-
-//
-var ShapePolygon = Backbone.Model.extend({
-  initialize: function (options) {
-  
-    var options = options || {},
-      initColor = options.initColor || '#FF0000',
-      finishColor = options.finishColor || '#0000FF';
-    
-    
-    function square() {
+function square() {
       var square = [],
       segments = 30,
-      size = 3.3;
+      size = 3.3,
+      i;
+    
     
       for(i = 0; i < segments; i++) {
         square.push([i*size, 0]);
@@ -203,56 +66,8 @@ var ShapePolygon = Backbone.Model.extend({
       
       return square;
     };
-    
-    coordinates0 = square();
-    coordinates1 = circle(coordinates0);
-  
-    d0 = "M" + coordinates0.join("L") + "Z",
-    d1 = "M" + coordinates1.join("L") + "Z";
-  
-    this._diamond2circle = d3.interpolateString(d0, d1);
-    //this._triangle2circle = d3.interpolateString(triangle(), circle());
-    this._color2color = d3.interpolateRgb(initColor, finishColor);
-    this._rotate = d3.interpolateNumber(-45, -90);
-    this._translate= d3.interpolateString('0, 70', '10, 110');
-    this._current = 0;
-    this.min = 0;
-    this.speed = 20;
-    this.max = this.speed * 2;
-
-  },
-  
-  transformOn: function (delta) {
-    var current = this._normalize(this._current - delta);
-    console.debug('Shape#transformOn:', current);
-    
-    
-    this.set({
-      'top': current * 70/this.max, 
-      'path': this._diamond2circle(current/this.speed/2),
-      'color': this._color2color(current/this.speed/2),
-      'rotate': this._rotate(current/this.speed/2),
-      'translate': this._translate(current/this.speed/2)
-    });
-    
-    this._current = current;
-  },
-  
-  _normalize: function (current) {
-    if (current < this.min) {
-      current = this.min;
-    } else if (current > this.max) {
-      current = this.max;
-    }
-    return current;
-  }
-});
-    
-
-//
-var ShapeCSS = Backbone.Model.extend({
-  // utils functions
-  _randomRgb: function ()  {
+   
+function randomRgb()  {
       function randomColorComponent() {
         return Math.floor(Math.random() * 256);
       }
@@ -262,9 +77,9 @@ var ShapeCSS = Backbone.Model.extend({
         g: randomColorComponent(),
         b: randomColorComponent()
       };
-  },
+  };
   
-  _interpolatorRgb: function (rgb1, rgb2) { 
+function interpolatorRgb(rgb1, rgb2) { 
     return function (n) {
       return {
         r: Math.floor(rgb1.r * (1 - n) + rgb2.r * n),
@@ -272,60 +87,205 @@ var ShapeCSS = Backbone.Model.extend({
         b: Math.floor(rgb1.b * (1 - n) + rgb2.b * n),
       }
     }
+  };
+  
+function rgbToHex(rgb) {
+    return "#" + ((rgb.r << 16) + (rgb.g << 8) + rgb.b).toString(16);
+  };
+
+/////////////////////////////////////// 
+_.templateSettings.interpolate = /\{\{(.+?)\}\}/g;
+//_.templateSettings.escape = /\{\{-(.*?)\}\}/g;
+
+var MainView = Backbone.View.extend({
+  el: 'body',
+  
+  initialize: function (options) {
+    this.state = new State();
   },
   
-  _rgbToHex: function (rgb) {
-    return "#" + ((rgb.r << 16) + (rgb.g << 8) + rgb.b).toString(16);
+  events: {
+    "mousewheel": "onScroll",
+    "swipedown": "onScroll",
+    "swipeup": "onScroll"
   },
-
-  initialize: function(options) {
-    options = options || {};
-    this._current = 0;
-    this.min = 3;
+  
+  onScroll: function (event) {
+    console.debug('onScroll', event);
+    var delta = event.originalEvent.wheelDelta/120; 
+    console.debug('delta:', delta);
+    this.state.transformOn(delta);
+  },
+  
+  render: function () {
+    var shapeView = this.shapeView = new ShapePolygonView({model: this.state});
+    var shapeView2 = this.shapeView2 = new ShapeCSSView({model: this.state});
+    var shapeView3 = this.shapeView3 = new ShapeSFView({model: this.state});
+    
+    this.$el.append(shapeView.render().el);
+    this.$el.append(shapeView2.render().el);
+    this.$el.append(shapeView3.render().el);
+    this.$el.hammer();
+    
+    return this;
+  }
+});
+    
+var State = Backbone.Model.extend({
+  defaults: {
+    state: 0
+  },
+  
+  initialize: function() {
+    this.min = 0;
+    this.max = 100;
     this.speed = 10;
-    this.max = (this.speed * 2);
-    
-    var initColor = this._randomRgb();
-    var finishColor = this._randomRgb();
-    this._interpolateRgb = this._interpolatorRgb(initColor, finishColor);
-    
   },
   
   transformOn: function (delta) {
-    var current = this._normalize(this._current - delta);
-    console.debug('Shape#transformOn:', current);
-  
-    this.set({
-      'top': current * 80/this.max, 
-      'borderRadius': current * 50/this.max,
-      'backgroundColor': this._rgbToHex(this._interpolateRgb(current * 1/this.max))
-    });
+    var current = this.get('state') - (delta * this.speed);
     
-    this._current = current;
-  },
-  
-  _normalize: function (current) {
     if (current < this.min) {
       current = this.min;
     } else if (current > this.max) {
       current = this.max;
     }
-    return current;
+    
+    this.set('state', current);
   }
 });
 
-var shape, shapeCss;
+var ShapePolygonView = Backbone.View.extend({
+  className: 'shape-polygon',
 
-var appInit = function () {
-  shape = new ShapePolygon();
-  var view = new MainView({shape: shape, ShapeView: ShapeView});
-  view.render();
-  shape.transformOn(0);
+ initialize: function (options) {
+   var options = options || {},
+      initColor = options.initColor || '#FF0000',
+      finishColor = options.finishColor || '#0000FF';
+ 
+   this.svg = d3.select(this.el).append("svg")
+      .attr('viewBox', '0 0 160 160')
+      .attr('preserveAspectRation', 'xMidYMid meet');
+      
+   this.path = this.svg.append("path");
+   
+    var coordinates0 = square();
+    var coordinates1 = circle(coordinates0);
   
-  // shapeCss = new ShapeCSS();
-  // var view = new MainView({shape: shapeCss, ShapeView: ShapeViewCSS});
-  // view.render();
-  // shapeCss.transformOn(0);
-};
+    var d0 = "M" + coordinates0.join("L") + "Z";
+    var d1 = "M" + coordinates1.join("L") + "Z";
+  
+    this._diamond2circle = d3.interpolateString(d0, d1);
+    //this._triangle2circle = d3.interpolateString(triangle(), circle());
+    this._color2color = d3.interpolateRgb(initColor, finishColor);
+    this._rotate = d3.interpolateNumber(-45, -90);
+    this._translate= d3.interpolateString('0, 70', '10, 124');
+    this._top = function (state) { return state * 80 };
+    
+    this.listenTo(this.model, 'change', this.render);
+ },
+ 
+ render: function () {
+    var state = this.model.get('state')/100;
+    
+    this.path
+     .attr('d', this._diamond2circle(state))
+     .attr('fill', this._color2color(state))
+     .attr('transform', 'translate(' + this._translate(state) + '), rotate(' + this._rotate(state) +')');
+     
+    this.$el.attr('style', 'top: '+ this._top(state) +'%');
+    
+    return this;
+ }
+});
 
-appInit();
+var ShapeSFView = Backbone.View.extend({
+  className: 'shape-sf',
+
+ initialize: function (options) {
+   var options = options || {},
+      initColor = options.initColor || '#FF0000',
+      finishColor = options.finishColor || '#0000FF';
+ 
+   this.svg = d3.select(this.el).append("svg")
+      .attr('viewBox', '0 0 160 160')
+      .attr('preserveAspectRation', 'xMidYMid meet');
+      
+   this.path = this.svg.append("path");
+    
+    var diamond = d3.superformula().type("diamond").size(10000).segments(360); 
+    var triangle = d3.superformula().type("triangle").size(10000).segments(360);
+    var circle = d3.superformula().type("circle").size(6000).segments(360);
+  
+    this._diamond2triangle = d3.interpolateString(diamond(), triangle());
+    this._triangle2circle = d3.interpolateString(triangle(), circle());
+    this._color2color = d3.interpolateRgb(initColor, finishColor);
+    this._rotate = d3.interpolateNumber(0, 60);
+    
+    this._translate= d3.interpolateString('70, 75', '70, 75');
+    this._top = function (state) { return state * 80 };
+    
+    this.listenTo(this.model, 'change', this.render);
+ },
+ 
+ render: function () {
+    var state = this.model.get('state')/100;
+    
+    if (state <= 0.5) {
+      var path = this._diamond2triangle(state*2);
+    } else  {
+      var path =this._triangle2circle(state*2 - 1);
+    }
+    
+    this.path
+     .attr('d', path)
+     .attr('fill', this._color2color(state))
+     .attr('transform', 'translate(' + this._translate(state) + '), rotate(' + this._rotate(state) +')');
+     
+    this.$el.attr('style', 'top: '+ this._top(state) +'%');
+    
+    return this;
+ }
+});
+
+var ShapeCSSView = Backbone.View.extend({
+  className: 'shape-css-container',
+  template: _.template("<div class='shape-css' style='border-radius: {{borderRadius}}%; background-color: {{backgroundColor}}'></div></div>"),
+  
+  initialize: function (options) {
+    var initColor = randomRgb();
+    this.finishColor = randomRgb();
+    this._interpolateRgb = interpolatorRgb(initColor, this.finishColor);
+    
+    this.listenTo(this.model, 'change', this.render);
+  },
+  
+  render: function () {
+    console.debug('ShapeViewCSS#render', this.$el, this.model.toJSON()); 
+    
+    var current = this.model.get('state') / 100;
+    var params = {
+      top: current * 80, 
+      borderRadius: current * 50,
+      backgroundColor: rgbToHex(this._interpolateRgb(current))
+    }
+    
+    this.$el.html(this.template(params));
+    this.$el.attr('style', 'top: '+params.top+'%');
+    
+    if (current === 1) {
+      var initColor = randomRgb();
+      this._interpolateRgb = interpolatorRgb(initColor, this.finishColor);
+    }
+    
+    return this;
+  }
+});
+
+var view;
+
+(function () {
+
+  view = new MainView();
+  view.render();
+})();

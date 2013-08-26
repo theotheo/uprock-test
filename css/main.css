@@ -103,26 +103,34 @@ html {
   border: green solid 5px;
 }
 
-#svg {
-  position: relative;
+.shape-polygon, .shape-sf {
+  position: absolute;
   width: 15%;
-  left: 45%;
-} 
-
-.shape-container {
-  display: inline-block;
-  position: relative;
-  width: 10%;
-  left: 45%;
 }
 
-.shape-container:before {
+.shape-polygon {
+  left: 50%;
+} 
+
+.shape-sf {
+  left: 20%;
+} 
+
+.shape-css-container {
+  display: inline-block;
+  position: absolute;
+  width: 10%;
+  left: 42%;
+  margin-top: 4.3%;
+}
+
+.shape-css-container:before {
   content:"";
   display:block;
   margin-top:100%;
 }
  
-.shape {
+.shape-css {
    position: absolute;
    left: 0;
    right: 0;
