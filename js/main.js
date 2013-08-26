@@ -111,6 +111,7 @@ var MainView = Backbone.View.extend({
   },
   
   onScroll: function (event) {
+    alert(event);
     console.debug('onScroll', event);
     var delta = event.originalEvent !== undefined ? event.originalEvent.wheelDelta/120 : event.deltaY/100; 
     console.debug('delta:', delta);
