@@ -106,13 +106,13 @@ var MainView = Backbone.View.extend({
   
   events: {
     "mousewheel": "onScroll",
-    "swipedown": "onScroll",
-    "swipeup": "onScroll"
+    "dragdown": "onScroll",
+    "dragup": "onScroll"
   },
   
   onScroll: function (event) {
     console.debug('onScroll', event);
-    var delta = event.originalEvent.wheelDelta/120; 
+    var delta = event.originalEvent !== undefined ? event.originalEvent.wheelDelta/120 : event.deltaY/100; 
     console.debug('delta:', delta);
     this.state.transformOn(delta);
   },
